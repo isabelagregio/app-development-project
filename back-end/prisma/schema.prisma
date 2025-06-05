@@ -1,0 +1,75 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:isabela19@localhost:5432/onco_app?schema=public"
+}
+
+enum AppointmentType {
+  CONSULTATION
+  EXAM
+  TREATMENT
+}
+
+model User {
+   id             Int       @id @default(autoincrement())
+  name           String
+  birthday       DateTime
+  phone          String
+  email          String    @unique
+  createdAt      DateTime  @default(now())
+  disease        String
+  diagnosisDate  DateTime
+  symptoms       Symptom[]
+  medications    Medication[]
+  appointments   Appointment[]
+  posts          Post[]
+}
+
+model Symptom {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  name      String    
+  severity  Int       
+  note      String?  
+  createdAt DateTime  @default(now())
+}
+
+model Medication {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int
+  name          String   
+  dosage        String   
+  frequency     String    
+  startDate     DateTime
+  endDate       DateTime?
+  note          String?   
+  createdAt     DateTime  @default(now())
+}
+
+model Appointment {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int
+  type          AppointmentType
+  doctor        String?
+  title         String  
+  location      String
+  date          DateTime
+  note          String?
+  createdAt     DateTime   @default(now())
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
