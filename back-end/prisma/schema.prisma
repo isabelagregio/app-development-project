@@ -15,7 +15,7 @@ enum AppointmentType {
 }
 
 model User {
-   id             Int       @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String
   birthday       DateTime
   phone          String
@@ -23,21 +23,38 @@ model User {
   createdAt      DateTime  @default(now())
   disease        String
   diagnosisDate  DateTime
+  username      String   @unique
+  password      String
   symptoms       Symptom[]
   medications    Medication[]
   appointments   Appointment[]
-  posts          Post[]
+  options        SymptomOption[]
+  moods          Mood[]
+}
+
+model SymptomOption {
+  id       Int       @id @default(autoincrement())
+  name     String
+  user     User      @relation(fields: [userId], references: [id])
+  userId   Int
+  symptoms Symptom[]
+
+  @@unique([userId, name]) 
 }
 
 model Symptom {
-  id        Int       @id @default(autoincrement())
-  user      User      @relation(fields: [userId], references: [id])
-  userId    Int
-  name      String    
-  severity  Int       
-  note      String?  
-  createdAt DateTime  @default(now())
+  id               Int             @id @default(autoincrement())
+  user             User            @relation(fields: [userId], references: [id])
+  userId           Int
+
+  symptomOption    SymptomOption   @relation(fields: [symptomOptionId], references: [id])
+  symptomOptionId  Int
+
+  severity         Int
+  note             String?
+  createdAt        DateTime        @default(now())
 }
+
 
 model Medication {
   id            Int       @id @default(autoincrement())
@@ -63,13 +80,15 @@ model Appointment {
   date          DateTime
   note          String?
   createdAt     DateTime   @default(now())
+
+  @@unique([id, userId])
 }
 
-model Post {
+model Mood {
   id        Int      @id @default(autoincrement())
-  title     String
-  content   String
+  label     String
+  date      DateTime @default(now())
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
 }
+

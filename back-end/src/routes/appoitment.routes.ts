@@ -1,22 +1,16 @@
+// src/routes/appointment.routes.ts
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import {
+  createAppointment,
+  getAppointmentsByUser,
+  deleteAppointment,
+} from "../services/appointment.service";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 router.post("/", async (req, res) => {
-  const { userId, type, date, notes, title, location } = req.body;
-
   try {
-    const appointment = await prisma.appointment.create({
-      data: {
-        userId,
-        type,
-        date: new Date(date),
-        title,
-        location,
-      },
-    });
+    const appointment = await createAppointment(req.body);
     res.json(appointment);
   } catch (error) {
     console.error(error);
@@ -25,16 +19,24 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/user/:userId", async (req, res) => {
-  const { userId } = req.params;
   try {
-    const appointments = await prisma.appointment.findMany({
-      where: { userId: Number(userId) },
-      orderBy: { date: "desc" },
-    });
+    const appointments = await getAppointmentsByUser(Number(req.params.userId));
     res.json(appointments);
   } catch (error) {
     res.status(500).json({ error: "Erro ao buscar agendamentos" });
   }
 });
 
+router.delete("/:id", async (req, res) => {
+  const appointmentId = Number(req.params.id);
+  const userId = req.body.userId;
+
+  try {
+    await deleteAppointment(appointmentId, userId);
+    res.json({ message: "Agendamento deletado com sucesso" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao deletar agendamento" });
+  }
+});
 export default router;
