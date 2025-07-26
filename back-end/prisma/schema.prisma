@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:isabela19@localhost:5432/onco_app?schema=public"
+  url      = env("DATABASE_URL")
 }
 
 enum AppointmentType {

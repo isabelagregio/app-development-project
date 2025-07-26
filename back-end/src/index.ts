@@ -6,6 +6,9 @@ import appointmentRoutes from "./routes/appoitment.routes";
 import symptomRoutes from "./routes/symptom.routes";
 import loginRoutes from "./routes/auth.routes";
 import moodRoutes from "./routes/mood.routes";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
