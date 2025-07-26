@@ -5,6 +5,7 @@ import {
   getAppointmentsByUser,
   deleteAppointment,
 } from "../services/appointment.service";
+import { Request, Response } from "express";
 
 const router = Router();
 
