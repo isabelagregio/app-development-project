@@ -38,6 +38,19 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "API_URL": "https://onco-track.onrender.com",
+      "router": {},
+      "eas": {
+        "projectId": "d3df7d24-d73e-456a-bb60-7e58125a4fe0"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d3df7d24-d73e-456a-bb60-7e58125a4fe0"
     }
   }
 }

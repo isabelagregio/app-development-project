@@ -36,3 +36,26 @@ export const deleteAppointment = async (
     },
   });
 };
+
+export const updateAppointment = async (
+  appointmentId: number,
+  userId: number,
+  data: any
+) => {
+  return prisma.appointment.update({
+    where: {
+      id_userId: {
+        id: appointmentId,
+        userId: userId,
+      },
+    },
+    data: {
+      type: data.type,
+      date: new Date(data.date),
+      title: data.title,
+      location: data.location,
+      note: data.note,
+      doctor: data.doctor,
+    },
+  });
+};

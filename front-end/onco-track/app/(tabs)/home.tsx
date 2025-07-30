@@ -4,6 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { router, useLocalSearchParams } from "expo-router";
@@ -16,6 +17,7 @@ import { Colors } from "@/components/ui/colors";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import { useUser } from "../context/UserContext";
+import Constants from "expo-constants";
 
 function IntensityBar({ level }: { level: number }) {
   return (
@@ -33,7 +35,7 @@ function IntensityBar({ level }: { level: number }) {
   );
 }
 
-const API_URL = "http://192.168.15.119:3000";
+const API_URL = Constants.expoConfig?.extra?.API_URL;
 
 export default function HomeScreen() {
   const { user } = useUser();
@@ -152,149 +154,171 @@ export default function HomeScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topBar}>
-        <ThemedText type="title" style={styles.greeting}>
-          Olá {name}!
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <View style={styles.topBar}>
+          <ThemedText type="title" style={styles.greeting}>
+            Olá {name}!
+          </ThemedText>
+
+          <View style={styles.buttonsContainer}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => router.push("/")}
+            >
+              <MaterialIcons
+                name="logout"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 6 }}
+              />
+
+              <ThemedText style={styles.buttonText}>Sair</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <ThemedText type="title" style={styles.title}>
+          Como está se sentindo?
         </ThemedText>
 
-        <View style={styles.buttonsContainer}>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push("/")}
-          >
-            <MaterialIcons
-              name="logout"
-              size={20}
-              color="#fff"
-              style={{ marginRight: 6 }}
-            />
+        {moodSaved ? (
+          <View style={styles.savedMoodWrapper}>
+            <View style={styles.savedMoodCard}>
+              <MaterialCommunityIcons
+                name={
+                  moods.find((m) => m.label === todayMood.label)?.icon as any
+                }
+                size={38}
+                color={Colors.light.title}
+              />
+              <ThemedText style={styles.savedMoodLabel}>
+                {todayMood.label}
+              </ThemedText>
+            </View>
 
-            <ThemedText style={styles.buttonText}>Sair</ThemedText>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={styles.smallButton}
+              onPress={() => setMoodSaved(false)}
+            >
+              <Ionicons
+                name="create-outline"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 6 }}
+              />
+              <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
+                Editar
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <View style={styles.moodContainer}>
+              {moods.map(({ icon, label }, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.moodItemSmall,
+                    selectedMood === label && styles.moodItemSelected,
+                  ]}
+                  onPress={() => setSelectedMood(label)}
+                >
+                  <MaterialCommunityIcons
+                    name={icon as any}
+                    size={28}
+                    color={
+                      selectedMood === label
+                        ? Colors.light.title
+                        : Colors.light.subtitleDark
+                    }
+                  />
+                  <ThemedText style={styles.emojiLabel}>{label}</ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.saveMoodButton,
+                !selectedMood && styles.saveMoodDisabled,
+              ]}
+              disabled={!selectedMood}
+              onPress={todayMood ? updateMood : saveMood}
+            >
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={20}
+                color="#fff"
+                style={{ marginRight: 6 }}
+              />
+              <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
+                {todayMood ? "Atualizar" : "Salvar"}
+              </ThemedText>
+            </TouchableOpacity>
+          </>
+        )}
+
+        <ThemedText type="title" style={styles.title}>
+          Sintomas do dia
+        </ThemedText>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={Colors.light.button} />
+        ) : symptomsToday.length === 0 ? (
+          <ThemedText style={styles.emptyText}>
+            Nenhum sintoma registrado hoje.
+          </ThemedText>
+        ) : (
+          symptomsToday.map((symptom) => {
+            const createdAt = new Date(symptom.createdAt);
+            const formattedTime = `${createdAt
+              .getHours()
+              .toString()
+              .padStart(2, "0")}:${createdAt
+              .getMinutes()
+              .toString()
+              .padStart(2, "0")}`;
+
+            return (
+              <View key={symptom.id} style={styles.symptomCardWrapper}>
+                <View style={styles.symptomCard}>
+                  <ThemedText style={styles.symptomName}>
+                    {symptom.symptomOption.name}
+                  </ThemedText>
+                  <ThemedText style={styles.intensity}>
+                    <IntensityBar level={symptom.severity} />
+                  </ThemedText>
+                  {symptom.note && (
+                    <ThemedText style={styles.note}>{symptom.note}</ThemedText>
+                  )}
+                </View>
+                <View style={styles.timeFlag}>
+                  <ThemedText style={styles.timeText}>
+                    {formattedTime}
+                  </ThemedText>
+                </View>
+              </View>
+            );
+          })
+        )}
+
+        <TouchableOpacity
+          style={styles.smallButton}
+          onPress={() => router.push("/newSymthom")}
+        >
+          <Ionicons
+            name="add-circle-outline"
+            size={20}
+            color="#fff"
+            style={{ marginRight: 6 }}
+          />
+          <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
+            Registrar
+          </ThemedText>
+        </TouchableOpacity>
       </View>
-
-      <ThemedText type="title" style={styles.title}>
-        Como estou me sentindo?
-      </ThemedText>
-
-      {moodSaved ? (
-        <View style={styles.savedMoodWrapper}>
-          <View style={styles.savedMoodCard}>
-            <MaterialCommunityIcons
-              name={moods.find((m) => m.label === todayMood.label)?.icon as any}
-              size={38}
-              color={Colors.light.title}
-            />
-            <ThemedText style={styles.savedMoodLabel}>
-              {todayMood.label}
-            </ThemedText>
-          </View>
-
-          <TouchableOpacity
-            style={styles.smallButton}
-            onPress={() => setMoodSaved(false)}
-          >
-            <Ionicons
-              name="create-outline"
-              size={20}
-              color="#fff"
-              style={{ marginRight: 6 }}
-            />
-            <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
-              Editar
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <>
-          <View style={styles.moodContainer}>
-            {moods.map(({ icon, label }, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.moodItemSmall,
-                  selectedMood === label && styles.moodItemSelected,
-                ]}
-                onPress={() => setSelectedMood(label)}
-              >
-                <MaterialCommunityIcons
-                  name={icon as any}
-                  size={28}
-                  color={
-                    selectedMood === label
-                      ? Colors.light.title
-                      : Colors.light.subtitleDark
-                  }
-                />
-                <ThemedText style={styles.emojiLabel}>{label}</ThemedText>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.saveMoodButton,
-              !selectedMood && styles.saveMoodDisabled,
-            ]}
-            disabled={!selectedMood}
-            onPress={todayMood ? updateMood : saveMood}
-          >
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={20}
-              color="#fff"
-              style={{ marginRight: 6 }}
-            />
-            <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
-              {todayMood ? "Atualizar" : "Salvar"}
-            </ThemedText>
-          </TouchableOpacity>
-        </>
-      )}
-
-      <ThemedText type="title" style={styles.title}>
-        Sintomas do dia
-      </ThemedText>
-
-      {loading ? (
-        <ActivityIndicator size="large" color={Colors.light.button} />
-      ) : symptomsToday.length === 0 ? (
-        <ThemedText style={styles.emptyText}>
-          Nenhum sintoma registrado hoje.
-        </ThemedText>
-      ) : (
-        symptomsToday.map((symptom) => (
-          <View key={symptom.id} style={styles.symptomCard}>
-            <ThemedText style={styles.symptomName}>
-              {symptom.symptomOption.name}
-            </ThemedText>
-            <ThemedText style={styles.intensity}>
-              <IntensityBar level={symptom.severity} />
-            </ThemedText>
-            {symptom.note && (
-              <ThemedText style={styles.note}>{symptom.note}</ThemedText>
-            )}
-          </View>
-        ))
-      )}
-
-      <TouchableOpacity
-        style={styles.smallButton}
-        onPress={() => router.push("/newSymthom")}
-      >
-        <Ionicons
-          name="add-circle-outline"
-          size={20}
-          color="#fff"
-          style={{ marginRight: 6 }}
-        />
-        <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
-          Registrar
-        </ThemedText>
-      </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -343,6 +367,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 4,
     width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
 
   savedMoodLabel: {
@@ -353,10 +382,15 @@ const styles = StyleSheet.create({
   },
 
   symptomCard: {
-    backgroundColor: "#EDE9FE",
+    backgroundColor: Colors.light.card,
     padding: 12,
     borderRadius: 12,
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   symptomName: {
     fontSize: 16,
@@ -411,10 +445,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  scrollContainer: {
+    padding: 24,
+    backgroundColor: "#F9F5FF",
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: "#F9F5FF",
-    padding: 24,
   },
   title: {
     marginBottom: 8,
@@ -484,5 +521,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.light.text,
     marginRight: 8,
+  },
+  symptomCardWrapper: {
+    position: "relative",
+    marginBottom: 12,
+  },
+
+  timeFlag: {
+    position: "absolute",
+    top: 5,
+    right: 10,
+    backgroundColor: Colors.light.subtitle,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    zIndex: 10,
+  },
+
+  timeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });

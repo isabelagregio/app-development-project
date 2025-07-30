@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Calendar } from "react-native-calendars";
 import dayjs from "dayjs";
 import { useUser } from "../context/UserContext";
+import Constants from "expo-constants";
 
 type Appointment = {
   id: string;
@@ -24,6 +25,8 @@ const typeTranslationMap: Record<string, string> = {
 };
 
 export default function ScheduleScreen() {
+  // const API_URL = Constants.expoConfig?.extra?.API_URL;
+  const API_URL = "http://192.168.15.119:3000";
   const { user } = useUser();
   const userId = user.userId;
   const name = user.name;
@@ -38,7 +41,7 @@ export default function ScheduleScreen() {
       const fetchAppointments = async () => {
         try {
           const response = await fetch(
-            `http://192.168.15.119:3000/appointments/user/${userId}`
+            `${API_URL}/appointments/user/${userId}`
           );
           if (!response.ok) throw new Error("Erro ao buscar agendamentos");
           const data = await response.json();
@@ -130,6 +133,17 @@ export default function ScheduleScreen() {
               </View>
 
               <View style={styles.iconRow}>
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/editAppointment",
+                      params: { appointment: JSON.stringify(item) },
+                    })
+                  }
+                >
+                  <Ionicons name="create-outline" size={20} color="#7E22CE" />
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   onPress={() => handleDelete(item.id)}
                   style={{ marginLeft: 12 }}

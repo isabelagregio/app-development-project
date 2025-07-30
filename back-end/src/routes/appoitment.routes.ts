@@ -1,9 +1,9 @@
-// src/routes/appointment.routes.ts
 import { Router } from "express";
 import {
   createAppointment,
   getAppointmentsByUser,
   deleteAppointment,
+  updateAppointment,
 } from "../services/appointment.service";
 import { Request, Response } from "express";
 
@@ -40,4 +40,22 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ error: "Erro ao deletar agendamento" });
   }
 });
+
+router.put("/:id", async (req: Request, res: Response) => {
+  const appointmentId = Number(req.params.id);
+  const userId = req.body.userId;
+
+  try {
+    const updatedAppointment = await updateAppointment(
+      appointmentId,
+      userId,
+      req.body
+    );
+    res.json(updatedAppointment);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao atualizar agendamento" });
+  }
+});
+
 export default router;

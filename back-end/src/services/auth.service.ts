@@ -1,4 +1,3 @@
-// services/auth.service.ts
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -14,13 +13,18 @@ export async function login(username: string, password: string) {
   }
 
   if (password !== user.password) {
-    throw new Error(`Senha incorreta, ${password}, ${user.password}`);
+    throw new Error(`Senha incorreta`);
   }
 
-  // Retorne apenas os dados necessários
   return {
     id: user.id,
     name: user.name,
     email: user.email,
   };
+}
+
+export async function getUserById(id: number) {
+  return await prisma.user.findUnique({
+    where: { id },
+  });
 }

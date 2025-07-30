@@ -12,17 +12,20 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useUser } from "./context/UserContext";
+import Constants from "expo-constants";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { setUser } = useUser();
 
-  const API_URL = "http://192.168.15.119:3000/login";
+  const API_URL = Constants.expoConfig?.extra?.API_URL;
 
   const handleLogin = async () => {
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,7 +35,7 @@ export default function LoginScreen() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(errorData.error || "Erro ao fazer login.");
+        setErrorMessage(errorData.error || "Erro ao fazer login.");
         return;
       }
 
@@ -81,10 +84,17 @@ export default function LoginScreen() {
           placeholder="Digite sua senha"
           placeholderTextColor="#A78BFA"
           style={styles.input}
-          secureTextEntry
+          secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
         />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <MaterialIcons
+            name={showPassword ? "visibility" : "visibility-off"}
+            size={20}
+            color="#A78BFA"
+          />
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
@@ -92,6 +102,18 @@ export default function LoginScreen() {
           Entrar
         </ThemedText>
       </TouchableOpacity>
+
+      {errorMessage ? (
+        <View style={styles.errorContainer}>
+          <MaterialIcons
+            name="error-outline"
+            size={20}
+            color="#fff"
+            style={styles.errorIcon}
+          />
+          <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+        </View>
+      ) : null}
 
       <ThemedText style={styles.registerPrompt}>
         Ainda não tem uma conta?{" "}
@@ -138,6 +160,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: Colors.light.link,
+    paddingRight: 8,
   },
   button: {
     width: "100%",
@@ -157,5 +180,23 @@ const styles = StyleSheet.create({
   registerLink: {
     color: Colors.light.link,
     textDecorationLine: "underline",
+  },
+  errorContainer: {
+    backgroundColor: "#f16161",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+
+  errorIcon: {
+    marginRight: 8,
+  },
+
+  errorText: {
+    color: "#fff",
+    fontSize: 14,
+    flexShrink: 1,
   },
 });

@@ -13,6 +13,7 @@ import { Colors } from "@/components/ui/colors";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { MaterialIcons } from "@expo/vector-icons";
+import Constants from "expo-constants";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -25,7 +26,7 @@ export default function RegisterScreen() {
   const [cancerType, setCancerType] = useState("");
   const [diagnosisDate, setDiagnosisDate] = useState("");
 
-  const API_URL = "http://192.168.15.119:3000/users";
+  const API_URL = Constants.expoConfig?.extra?.API_URL;
 
   function formatDateToISO(dateStr: string) {
     const [day, month, year] = dateStr.split("/");
@@ -39,7 +40,7 @@ export default function RegisterScreen() {
     }
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -11,8 +11,9 @@ import { LineChart } from "react-native-gifted-charts";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { useUser } from "@/app/context/UserContext";
+import Constants from "expo-constants";
 
-const API_URL = "http://192.168.15.119:3000";
+const API_URL = Constants.expoConfig?.extra?.API_URL;
 
 function IntensityBar({ level }: { level: number }) {
   return (
@@ -77,7 +78,10 @@ export default function SymptomDetailScreen() {
 
   const chartData = symptomHistory.map((item) => ({
     value: item.intensity,
-    label: item.date.slice(5),
+    label: (() => {
+      const [year, month, day] = item.date.split("-");
+      return `${day}/${month}`;
+    })(),
     labelTextStyle: { fontSize: 10, color: Colors.light.text },
     frontColor: "#7E22CE",
   }));
@@ -135,7 +139,9 @@ export default function SymptomDetailScreen() {
                   {symptom.symptomOption.name}
                 </ThemedText>
                 <View style={styles.dateFlag}>
-                  <Text style={styles.dateFlagText}>{symptom.date}</Text>
+                  <Text style={styles.dateFlagText}>
+                    {formatDateBR(symptom.date)}
+                  </Text>
                 </View>
               </View>
 
@@ -152,6 +158,11 @@ export default function SymptomDetailScreen() {
       )}
     </ScrollView>
   );
+}
+
+function formatDateBR(dateStr: string) {
+  const [year, month, day] = dateStr.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 const styles = StyleSheet.create({

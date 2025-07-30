@@ -7,6 +7,8 @@ import symptomRoutes from "./routes/symptom.routes";
 import loginRoutes from "./routes/auth.routes";
 import moodRoutes from "./routes/mood.routes";
 import dotenv from "dotenv";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./docs/swagger";
 
 dotenv.config();
 

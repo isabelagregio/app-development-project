@@ -1,4 +1,3 @@
-// routes/auth.routes.ts
 import { Router } from "express";
 import { login } from "../services/auth.service";
 

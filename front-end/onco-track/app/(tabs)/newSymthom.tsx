@@ -12,8 +12,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/components/ui/colors";
 import { router } from "expo-router";
 import { useUser } from "../context/UserContext";
+import Constants from "expo-constants";
 
-const API_URL = "http://192.168.15.119:3000";
+const API_URL = Constants.expoConfig?.extra?.API_URL;
 
 function IntensityBar({
   level,

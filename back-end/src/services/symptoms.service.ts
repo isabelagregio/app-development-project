@@ -20,7 +20,6 @@ export async function createNewSymptomOption(req: Request, res: Response) {
   }
 }
 
-// Buscar opções de sintomas do usuário
 export async function getSymptomOptions(req: Request, res: Response) {
   const userId = parseInt(req.params.userId);
 
@@ -35,7 +34,6 @@ export async function getSymptomOptions(req: Request, res: Response) {
   }
 }
 
-// Criar novo sintoma
 export async function createSymptom(req: Request, res: Response) {
   const { userId, symptomOptionId, severity, note } = req.body;
 
@@ -58,7 +56,6 @@ export async function createSymptom(req: Request, res: Response) {
   }
 }
 
-// Buscar sintomas do usuário
 export async function getUserSymptoms(req: Request, res: Response) {
   const userId = parseInt(req.params.userId);
 
@@ -77,16 +74,13 @@ export async function getUserSymptoms(req: Request, res: Response) {
   }
 }
 
-// GET /symptoms/today/:userId
 export async function getTodayUserSymptoms(req: Request, res: Response) {
   const userId = parseInt(req.params.userId);
 
   try {
-    // Definir início do dia (00:00:00)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Definir início do próximo dia (00:00:00 do dia seguinte)
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
@@ -111,7 +105,6 @@ export async function getTodayUserSymptoms(req: Request, res: Response) {
   }
 }
 
-// Deletar sintoma
 export async function deleteSymptom(req: Request, res: Response) {
   const id = parseInt(req.params.id);
 

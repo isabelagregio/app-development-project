@@ -1,22 +1,28 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, StyleSheet, Dimensions, ScrollView } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/components/ui/colors";
 import { PieChart } from "react-native-chart-kit";
 import { useUser } from "../context/UserContext";
 import { useFocusEffect } from "expo-router";
+import Constants from "expo-constants";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 
 const screenWidth = Dimensions.get("window").width;
-const API_URL = "http://192.168.15.119:3000";
+const API_URL = Constants.expoConfig?.extra?.API_URL;
 
-const moodColors: Record<string, string> = {
-  Animado: "#C084FC",
-  Feliz: "#8b69f3",
-  Calmo: "#93C5FD",
-  Triste: "#60A5FA",
-  Estressado: "#6366F1",
-  Horrível: "#6B7280",
-};
+const moods = [
+  { icon: "emoticon-excited-outline", label: "Animado", color: "#C084FC" },
+  { icon: "emoticon-happy-outline", label: "Feliz", color: "#8b69f3" },
+  { icon: "emoticon-cool-outline", label: "Calmo", color: "#93C5FD" },
+  { icon: "emoticon-sad-outline", label: "Triste", color: "#60A5FA" },
+  { icon: "emoticon-angry-outline", label: "Estressado", color: "#6366F1" },
+  { icon: "emoticon-dead-outline", label: "Horrível", color: "#6B7280" },
+] as const;
 
 export default function MoodsScreen() {
   const { user } = useUser();
@@ -44,13 +50,15 @@ export default function MoodsScreen() {
           moodCount[mood.label] = (moodCount[mood.label] || 0) + 1;
         });
 
-        const chartData = Object.keys(moodCount).map((label) => ({
-          name: label,
-          population: moodCount[label],
-          color: moodColors[label] || "#D1D5DB",
-          legendFontColor: "#4C1D95",
-          legendFontSize: 14,
-        }));
+        const chartData = moods
+          .filter(({ label }) => moodCount[label])
+          .map(({ label, color }) => ({
+            name: label,
+            population: moodCount[label],
+            color,
+            legendFontColor: "#4C1D95",
+            legendFontSize: 14,
+          }));
 
         const sorted = Object.entries(moodCount).sort(
           (a: [string, number], b: [string, number]) => b[1] - a[1]
@@ -82,48 +90,66 @@ export default function MoodsScreen() {
     }
   };
 
+  const getMoodIcon = (label: string, size = 24, color = "#4C1D95") => {
+    const mood = moods.find((m) => m.label === label);
+    if (!mood) return null;
+    return (
+      <MaterialCommunityIcons
+        name={mood.icon}
+        size={size}
+        color={color}
+        style={{ marginRight: 6, marginTop: 6 }}
+      />
+    );
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <ThemedText type="title" style={styles.title}>
-        Frequência de Humores
+        Frequência de humores
       </ThemedText>
 
       {moodData.length > 0 ? (
         <>
-          <PieChart
-            data={moodData.map(({ name, color }) => ({
-              name,
-              population: 1,
-              color,
-              legendFontColor: "#4C1D95",
-              legendFontSize: 14,
-            }))}
-            width={screenWidth - 40}
-            height={220}
-            chartConfig={{
-              color: () => "#000",
-              labelColor: () => "#000",
-            }}
-            accessor="population"
-            backgroundColor="transparent"
-            paddingLeft="15"
-            hasLegend={true}
-            absolute={false}
-          />
+          <View style={styles.card}>
+            <PieChart
+              data={moodData}
+              width={screenWidth - 48}
+              height={220}
+              chartConfig={{
+                color: () => "#000",
+                labelColor: () => "#000",
+              }}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              hasLegend={true}
+              absolute={false}
+            />
+          </View>
 
           <ThemedText type="subtitle" style={styles.predominantText}>
             Seu humor predominante é:{" "}
+            {getMoodIcon(predominantMood, 26, Colors.light.title)}
             <ThemedText style={styles.boldText}>{predominantMood}</ThemedText>
           </ThemedText>
 
           <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Percentual de humores
+            Análise de sentimentos
           </ThemedText>
 
           <View style={styles.barWrapper}>
-            <ThemedText style={styles.barLabel}>
-              Positivos: {positivePercentage}%
-            </ThemedText>
+            <View style={styles.barLabelRow}>
+              <MaterialIcons
+                name="sentiment-very-satisfied"
+                size={20}
+                color="#8b69f3"
+                style={{ marginRight: 6 }}
+              />
+              <ThemedText style={styles.barLabel}>
+                Positivos: {positivePercentage}%
+              </ThemedText>
+            </View>
             <View style={styles.barBackground}>
               <View
                 style={[
@@ -138,9 +164,17 @@ export default function MoodsScreen() {
           </View>
 
           <View style={styles.barWrapper}>
-            <ThemedText style={styles.barLabel}>
-              Negativos: {negativePercentage}%
-            </ThemedText>
+            <View style={styles.barLabelRow}>
+              <MaterialIcons
+                name="sentiment-very-dissatisfied"
+                size={20}
+                color="#6B7280"
+                style={{ marginRight: 6 }}
+              />
+              <ThemedText style={styles.barLabel}>
+                Negativos: {negativePercentage}%
+              </ThemedText>
+            </View>
             <View style={styles.barBackground}>
               <View
                 style={[
@@ -167,18 +201,31 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: "#F9F5FF",
-    flex: 1,
+    flexGrow: 1,
   },
   title: {
     fontSize: 22,
     marginBottom: 20,
     color: Colors.light.title,
   },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    marginBottom: 20,
+  },
   predominantText: {
     fontSize: 16,
     marginTop: 20,
     color: Colors.light.subtitleDark,
     textAlign: "center",
+    flexDirection: "row",
+    alignItems: "center",
   },
   boldText: {
     fontWeight: "bold",
@@ -195,9 +242,13 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 12,
   },
+  barLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
   barLabel: {
     fontSize: 14,
-    marginBottom: 4,
     color: Colors.light.text,
   },
   barBackground: {

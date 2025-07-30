@@ -3,6 +3,7 @@ export const Colors = {
     background: "#F9F5FF",
     surface: "#F3E8FF",
     surfaceAlt: "#E9D5FF",
+    card: "#EDE9FE",
     border: "#D8B4FE",
     button: "#A855F7",
     subtitle: "#C084FC",

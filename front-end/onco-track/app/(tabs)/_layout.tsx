@@ -14,7 +14,7 @@ function AppHeaderTitle() {
   return (
     <View style={styles.headerContainer}>
       <Image
-        source={require("@/assets/images/oncotrack-horizontal.png")}
+        source={require("@/assets/images/oncotrack-horizontal-logo.png")}
         style={styles.headerLogo}
         resizeMode="contain"
       />
@@ -69,11 +69,29 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="moods"
+        options={{
+          title: "Meu humor",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="emoji-emotions" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="appoitments"
         options={{
-          title: "Agendamentos",
+          title: "Agenda",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="calendar-month" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Perfil",
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="account-box" size={24} color={color} />
           ),
         }}
       />
@@ -102,18 +120,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="symptomDetail/[name]"
+        name="editAppointment"
         options={{
           href: null,
         }}
       />
       <Tabs.Screen
-        name="moods"
+        name="symptomDetail/[name]"
         options={{
-          title: "Meu humor",
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="emoji-emotions" size={24} color={color} />
-          ),
+          href: null,
         }}
       />
     </Tabs>
