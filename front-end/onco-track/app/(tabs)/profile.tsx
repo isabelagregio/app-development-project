@@ -30,8 +30,7 @@ export default function ProfileScreen() {
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // const API_URL = Constants.expoConfig?.extra?.API_URL;
-  const API_URL = "http://192.168.15.119:3000";
+  const API_URL = Constants.expoConfig?.extra?.API_URL;
   const userId = user?.userId;
 
   useEffect(() => {

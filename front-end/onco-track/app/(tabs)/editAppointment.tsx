@@ -17,8 +17,7 @@ import { useUser } from "../context/UserContext";
 import { Colors } from "@/components/ui/colors";
 
 export default function EditAppointmentScreen() {
-  // const API_URL = Constants.expoConfig?.extra?.API_URL;
-  const API_URL = "http://192.168.15.119:3000";
+  const API_URL = Constants.expoConfig?.extra?.API_URL;
   const { user } = useUser();
 
   const { appointment } = useLocalSearchParams();

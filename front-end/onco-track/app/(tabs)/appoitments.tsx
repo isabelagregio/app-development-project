@@ -25,8 +25,7 @@ const typeTranslationMap: Record<string, string> = {
 };
 
 export default function ScheduleScreen() {
-  // const API_URL = Constants.expoConfig?.extra?.API_URL;
-  const API_URL = "http://192.168.15.119:3000";
+  const API_URL = Constants.expoConfig?.extra?.API_URL;
   const { user } = useUser();
   const userId = user.userId;
   const name = user.name;
