@@ -1,23 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  FlatList,
 } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import {
   Ionicons,
   MaterialCommunityIcons,
   MaterialIcons,
 } from "@expo/vector-icons";
-import { Colors } from "@/components/ui/colors";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback } from "react";
 import { useUser } from "../context/UserContext";
 import Constants from "expo-constants";
+
+// Fonte Inter
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 
 function IntensityBar({ level }: { level: number }) {
   return (
@@ -27,7 +35,7 @@ function IntensityBar({ level }: { level: number }) {
           key={i}
           style={[
             styles.bar,
-            { backgroundColor: i <= level ? "#7E22CE" : "#D8B4FE" },
+            { backgroundColor: i <= level ? "#6D28D9" : "#E9D5FF" },
           ]}
         />
       ))}
@@ -41,12 +49,36 @@ export default function HomeScreen() {
   const { user } = useUser();
   const name = user.name;
   const userId = user.userId;
-
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [moodSaved, setMoodSaved] = useState(false);
   const [todayMood, setTodayMood] = useState<any | null>(null);
   const [symptomsToday, setSymptomsToday] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const flatListRef = useRef<FlatList>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const moods = [
+    { icon: "emoticon-excited-outline", label: "Animado" },
+    { icon: "emoticon-happy-outline", label: "Feliz" },
+    { icon: "emoticon-cool-outline", label: "Calmo" },
+    { icon: "emoticon-sad-outline", label: "Triste" },
+    { icon: "emoticon-angry-outline", label: "Estressado" },
+    { icon: "emoticon-dead-outline", label: "Horrível" },
+  ];
+
+  const itemsPerPage = 3;
+  const totalPages = Math.ceil(moods.length / itemsPerPage);
+
+  const goToPage = (page: number) => {
+    if (page >= 0 && page < totalPages) {
+      flatListRef.current?.scrollToIndex({
+        index: page * itemsPerPage,
+        animated: true,
+      });
+      setCurrentPage(page);
+    }
+  };
 
   useEffect(() => {
     fetchTodaySymptoms();
@@ -76,17 +108,14 @@ export default function HomeScreen() {
     try {
       const response = await fetch(`${API_URL}/moods/${userId}`);
       const moods = await response.json();
-
       if (Array.isArray(moods) && moods.length > 0) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
         const todayMoodEntry = moods.find((mood: any) => {
           const moodDate = new Date(mood.date);
           moodDate.setHours(0, 0, 0, 0);
           return moodDate.getTime() === today.getTime();
         });
-
         if (todayMoodEntry) {
           setTodayMood(todayMoodEntry);
           setMoodSaved(true);
@@ -100,21 +129,16 @@ export default function HomeScreen() {
 
   const saveMood = async () => {
     if (!selectedMood) return;
-
     try {
       const response = await fetch(`${API_URL}/moods`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, label: selectedMood }),
       });
-
       if (response.ok) {
         const data = await response.json();
         setTodayMood(data);
         setMoodSaved(true);
-      } else {
-        const err = await response.json();
-        console.warn("Erro ao salvar humor:", err);
       }
     } catch (error) {
       console.error("Erro ao salvar humor:", error);
@@ -123,62 +147,56 @@ export default function HomeScreen() {
 
   const updateMood = async () => {
     if (!selectedMood) return;
-
     try {
       const response = await fetch(`${API_URL}/moods/${userId}/today`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label: selectedMood }),
       });
-
       if (response.ok) {
         const updated = await response.json();
         setTodayMood(updated);
         setMoodSaved(true);
-      } else {
-        const err = await response.json();
-        console.warn("Erro ao atualizar humor:", err);
       }
     } catch (error) {
       console.error("Erro ao atualizar humor:", error);
     }
   };
 
-  const moods = [
-    { icon: "emoticon-excited-outline", label: "Animado" },
-    { icon: "emoticon-happy-outline", label: "Feliz" },
-    { icon: "emoticon-cool-outline", label: "Calmo" },
-    { icon: "emoticon-sad-outline", label: "Triste" },
-    { icon: "emoticon-angry-outline", label: "Estressado" },
-    { icon: "emoticon-dead-outline", label: "Horrível" },
-  ];
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return <ActivityIndicator size="large" color="#6D28D9" />;
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
+        {/* Top bar */}
         <View style={styles.topBar}>
           <ThemedText type="title" style={styles.greeting}>
             Olá {name}!
           </ThemedText>
-
-          <View style={styles.buttonsContainer}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => router.push("/")}
-            >
-              <MaterialIcons
-                name="logout"
-                size={20}
-                color="#fff"
-                style={{ marginRight: 6 }}
-              />
-
-              <ThemedText style={styles.buttonText}>Sair</ThemedText>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => router.push("/")}
+          >
+            <MaterialIcons
+              name="logout"
+              size={20}
+              color="#fff"
+              style={{ marginRight: 6 }}
+            />
+            <ThemedText style={styles.logoutText}>Sair</ThemedText>
+          </TouchableOpacity>
         </View>
 
-        <ThemedText type="title" style={styles.title}>
+        <ThemedText type="title" style={styles.sectionTitle}>
           Como está se sentindo?
         </ThemedText>
 
@@ -189,16 +207,15 @@ export default function HomeScreen() {
                 name={
                   moods.find((m) => m.label === todayMood.label)?.icon as any
                 }
-                size={38}
-                color={Colors.light.title}
+                size={36}
+                color="#6D28D9"
               />
               <ThemedText style={styles.savedMoodLabel}>
                 {todayMood.label}
               </ThemedText>
             </View>
-
             <TouchableOpacity
-              style={styles.smallButton}
+              style={styles.actionButton}
               onPress={() => setMoodSaved(false)}
             >
               <Ionicons
@@ -207,41 +224,73 @@ export default function HomeScreen() {
                 color="#fff"
                 style={{ marginRight: 6 }}
               />
-              <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
-                Editar
-              </ThemedText>
+              <ThemedText style={styles.actionButtonText}>Editar</ThemedText>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            <View style={styles.moodContainer}>
-              {moods.map(({ icon, label }, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.moodItemSmall,
-                    selectedMood === label && styles.moodItemSelected,
-                  ]}
-                  onPress={() => setSelectedMood(label)}
-                >
-                  <MaterialCommunityIcons
-                    name={icon as any}
-                    size={28}
-                    color={
-                      selectedMood === label
-                        ? Colors.light.title
-                        : Colors.light.subtitleDark
-                    }
-                  />
-                  <ThemedText style={styles.emojiLabel}>{label}</ThemedText>
-                </TouchableOpacity>
-              ))}
+            {/* Carousel de humores */}
+            <View style={styles.carouselWrapper}>
+              <TouchableOpacity
+                onPress={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 0}
+              >
+                <Ionicons
+                  name="chevron-back-circle"
+                  size={32}
+                  color={currentPage === 0 ? "#D1D5DB" : "#6D28D9"}
+                />
+              </TouchableOpacity>
+
+              <FlatList
+                ref={flatListRef}
+                data={moods}
+                horizontal
+                scrollEnabled={false}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.moodItem,
+                      selectedMood === item.label && styles.moodItemSelected,
+                    ]}
+                    onPress={() => setSelectedMood(item.label)}
+                  >
+                    <MaterialCommunityIcons
+                      name={item.icon as any}
+                      size={28}
+                      color={
+                        selectedMood === item.label ? "#6D28D9" : "#9CA3AF"
+                      }
+                    />
+                    <ThemedText style={styles.moodLabel}>
+                      {item.label}
+                    </ThemedText>
+                  </TouchableOpacity>
+                )}
+                getItemLayout={(data, index) => ({
+                  length: 100,
+                  offset: 100 * index,
+                  index,
+                })}
+              />
+
+              <TouchableOpacity
+                onPress={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages - 1}
+              >
+                <Ionicons
+                  name="chevron-forward-circle"
+                  size={32}
+                  color={currentPage === totalPages - 1 ? "#D1D5DB" : "#6D28D9"}
+                />
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity
               style={[
-                styles.saveMoodButton,
-                !selectedMood && styles.saveMoodDisabled,
+                styles.saveButton,
+                !selectedMood && styles.saveButtonDisabled,
               ]}
               disabled={!selectedMood}
               onPress={todayMood ? updateMood : saveMood}
@@ -252,19 +301,20 @@ export default function HomeScreen() {
                 color="#fff"
                 style={{ marginRight: 6 }}
               />
-              <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
+              <ThemedText style={styles.saveButtonText}>
                 {todayMood ? "Atualizar" : "Salvar"}
               </ThemedText>
             </TouchableOpacity>
           </>
         )}
 
-        <ThemedText type="title" style={styles.title}>
+        {/* Symptoms section */}
+        <ThemedText type="title" style={styles.sectionTitle}>
           Sintomas do dia
         </ThemedText>
 
         {loading ? (
-          <ActivityIndicator size="large" color={Colors.light.button} />
+          <ActivityIndicator size="large" color="#6D28D9" />
         ) : symptomsToday.length === 0 ? (
           <ThemedText style={styles.emptyText}>
             Nenhum sintoma registrado hoje.
@@ -279,16 +329,13 @@ export default function HomeScreen() {
               .getMinutes()
               .toString()
               .padStart(2, "0")}`;
-
             return (
               <View key={symptom.id} style={styles.symptomCardWrapper}>
                 <View style={styles.symptomCard}>
                   <ThemedText style={styles.symptomName}>
                     {symptom.symptomOption.name}
                   </ThemedText>
-                  <ThemedText style={styles.intensity}>
-                    <IntensityBar level={symptom.severity} />
-                  </ThemedText>
+                  <IntensityBar level={symptom.severity} />
                   {symptom.note && (
                     <ThemedText style={styles.note}>{symptom.note}</ThemedText>
                   )}
@@ -304,7 +351,7 @@ export default function HomeScreen() {
         )}
 
         <TouchableOpacity
-          style={styles.smallButton}
+          style={styles.actionButton}
           onPress={() => router.push("/newSymthom")}
         >
           <Ionicons
@@ -313,9 +360,7 @@ export default function HomeScreen() {
             color="#fff"
             style={{ marginRight: 6 }}
           />
-          <ThemedText type="defaultSemiBold" style={styles.smallButtonText}>
-            Registrar
-          </ThemedText>
+          <ThemedText style={styles.actionButtonText}>Registrar</ThemedText>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -323,224 +368,183 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  moodItemSmall: {
-    width: 80,
-    height: 68,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 12,
-    backgroundColor: "#F3E8FF",
-    padding: 6,
-  },
-
-  emojiLabel: {
-    fontSize: 13,
-    marginTop: 4,
-    color: Colors.light.text,
-    textAlign: "center",
-  },
-
-  saveMoodButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.light.button,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    marginBottom: 6,
-    alignSelf: "flex-start",
-  },
-  saveMoodDisabled: {
-    backgroundColor: "#CCC",
-  },
-
-  savedMoodWrapper: {
-    width: "100%",
-    alignItems: "center",
-  },
-
-  savedMoodCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#DDD6FE",
-    borderRadius: 10,
-    paddingVertical: 4,
-    width: "100%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-
-  savedMoodLabel: {
-    fontSize: 16,
-    color: Colors.light.text,
-    fontWeight: "bold",
-    marginLeft: 10,
-  },
-
-  symptomCard: {
-    backgroundColor: Colors.light.card,
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  symptomName: {
-    fontSize: 16,
-    color: Colors.light.text,
-    fontWeight: "bold",
-  },
-  intensity: {
-    marginTop: 4,
-    fontSize: 14,
-    color: Colors.light.subtitle,
-  },
-  note: {
-    marginTop: 4,
-    fontSize: 13,
-    fontStyle: "italic",
-    color: Colors.light.subtitleDark,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: Colors.light.subtitle,
-    marginTop: 12,
-    textAlign: "center",
-  },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  greeting: {
-    fontFamily: "PlayfairDisplay_400Regular",
-    marginBottom: 8,
-    fontSize: 24,
-    color: Colors.light.title,
-  },
-  buttonsContainer: {
-    flexDirection: "row",
-  },
-  button: {
-    backgroundColor: Colors.light.button,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginLeft: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 14,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
   scrollContainer: {
     padding: 24,
-    backgroundColor: "#F9F5FF",
+    backgroundColor: "#F9FAFB",
     flexGrow: 1,
   },
   container: {
     flex: 1,
   },
-  title: {
-    marginBottom: 8,
-    fontSize: 20,
-    color: Colors.light.subtitleDark,
-    marginTop: 16,
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
   },
-  smallButton: {
+  greeting: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#374151",
+    fontFamily: "Inter_600SemiBold",
+  },
+  logoutButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.light.button,
-    paddingHorizontal: 10,
+    backgroundColor: "#6D28D9",
     paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-    marginTop: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
   },
-  smallButtonText: {
+  logoutText: {
     color: "#fff",
     fontSize: 14,
+    fontFamily: "Inter_400Regular",
   },
-  moodContainer: {
+  sectionTitle: {
+    marginBottom: 12,
+    fontSize: 18,
+    color: "#4B5563",
+    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
+  },
+  carouselWrapper: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "center",
     justifyContent: "space-between",
-    marginVertical: 8,
-    gap: 8,
+    marginBottom: 16,
   },
   moodItem: {
-    width: "30%",
+    width: 80,
     alignItems: "center",
     paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: "#EDE9FE",
+    marginHorizontal: 6,
+    borderRadius: 120,
+    backgroundColor: "#F3E8FF",
   },
   moodItemSelected: {
-    backgroundColor: "#C4B5FD",
+    backgroundColor: "#DDD6FE",
+    borderWidth: 2,
+    borderColor: "#6D28D9",
+  },
+  moodLabel: {
+    fontSize: 13,
+    marginTop: 6,
+    color: "#374151",
+    fontFamily: "Inter_400Regular",
+  },
+  saveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#6D28D9",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+    marginBottom: 20,
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#D1D5DB",
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+  },
+  savedMoodWrapper: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  savedMoodCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EDE9FE",
+    borderRadius: 80,
+    padding: 12,
+    width: "100%",
+    justifyContent: "center",
+  },
+  savedMoodLabel: {
+    fontSize: 16,
+    color: "#374151",
+    fontWeight: "600",
+    marginLeft: 10,
+    fontFamily: "Inter_600SemiBold",
+  },
+  symptomCardWrapper: {
+    position: "relative",
+    marginBottom: 16,
+  },
+  symptomCard: {
+    backgroundColor: "#FFFFFF",
+    padding: 14,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  symptomName: {
+    fontSize: 16,
+    color: "#111827",
+    fontWeight: "600",
+    marginBottom: 6,
+    fontFamily: "Inter_600SemiBold",
+  },
+  note: {
+    marginTop: 6,
+    fontSize: 13,
+    fontStyle: "italic",
+    color: "#6B7280",
+    fontFamily: "Inter_400Regular",
+  },
+  timeFlag: {
+    position: "absolute",
+    top: 8,
+    right: 12,
+    backgroundColor: "#6D28D9",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  timeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
   },
   barContainer: {
     flexDirection: "row",
+    marginTop: 6,
   },
   bar: {
-    width: 24,
+    width: 20,
     height: 8,
     borderRadius: 4,
     marginRight: 4,
   },
-  symptomHeader: {
+  actionButton: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    backgroundColor: "#6D28D9",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+    marginTop: 10,
   },
-  typeText: {
-    fontSize: 12,
-    color: "#5B21B6",
-  },
-  symptomTitle: {
-    fontSize: 16,
-    color: Colors.light.subtitleDark,
-  },
-  symptomInfoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  symptomText: {
-    fontSize: 14,
-    color: Colors.light.text,
-    marginRight: 8,
-  },
-  symptomCardWrapper: {
-    position: "relative",
-    marginBottom: 12,
-  },
-
-  timeFlag: {
-    position: "absolute",
-    top: 5,
-    right: 10,
-    backgroundColor: Colors.light.subtitle,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    zIndex: 10,
-  },
-
-  timeText: {
+  actionButtonText: {
     color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+  },
+  emptyText: {
+    fontSize: 15,
+    color: "#6B7280",
+    marginVertical: 12,
+    textAlign: "center",
+    fontFamily: "Inter_400Regular",
   },
 });

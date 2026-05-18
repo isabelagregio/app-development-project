@@ -1,4 +1,8 @@
+// SEU ARQUIVO PRINCIPAL DO SERVIDOR (ex: index.ts ou server.ts)
+
 import express from "express";
+// 💡 Passo 1: Importe o pacote cors
+import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 import userRoutes from "./routes/user.routes";
 import medicationRoutes from "./routes/medication.routes";
@@ -14,9 +18,16 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT;
 
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-// Routes
 app.use("/users", userRoutes);
 app.use("/medications", medicationRoutes);
 app.use("/appointments", appointmentRoutes);
@@ -28,6 +39,6 @@ app.get("/", (_req, res) => {
   res.send("OncoTrack API is running");
 });
 
-app.listen(3000, "0.0.0.0", () => {
+app.listen(4000, "0.0.0.0", () => {
   console.log("Servidor rodando em http://192.168.15.119:3000");
 });

@@ -4,6 +4,7 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
@@ -11,10 +12,16 @@ import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/components/ui/colors";
 import { BarChart } from "react-native-gifted-charts";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useUser } from "../context/UserContext";
 import Constants from "expo-constants";
-import { LinearGradient } from "expo-linear-gradient";
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 
 const API_URL = Constants.expoConfig?.extra?.API_URL;
 
@@ -25,7 +32,6 @@ export default function SymthomTrackScreen() {
 
   const { user } = useUser();
   const userId = user.userId;
-
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -65,12 +71,28 @@ export default function SymthomTrackScreen() {
     value: item.frequency,
     label: item.name,
     frontColor: "#7E22CE",
-    spacing: 36,
-    labelTextStyle: { color: Colors.light.text, fontSize: 10, marginTop: 6 },
+    spacing: 32,
+    labelTextStyle: {
+      color: Colors.light.text,
+      fontSize: 11,
+      fontFamily: "System",
+      marginTop: 6,
+    },
   }));
 
-  const maxValue = Math.max(...barData.map((d) => d.value));
+  const maxValue = Math.max(...barData.map((d) => d.value), 0);
   const noOfSections = 4;
+
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return <ActivityIndicator size="large" color="#6D28D9" />;
+  }
 
   return (
     <ScrollView
@@ -87,6 +109,7 @@ export default function SymthomTrackScreen() {
           Frequência
         </ThemedText>
       </View>
+
       {loading ? (
         <Text style={styles.centeredText}>Carregando...</Text>
       ) : symptomStats.length === 0 ? (
@@ -94,32 +117,40 @@ export default function SymthomTrackScreen() {
           Nenhum sintoma registrado ainda.
         </Text>
       ) : (
-        <View style={styles.card}>
-          <BarChart
-            data={barData}
-            barWidth={24}
-            barBorderRadius={10}
-            maxValue={maxValue + 1}
-            height={220}
-            noOfSections={noOfSections}
-            frontColor="#7E22CE"
-            isAnimated
-            xAxisLabelTextStyle={{
-              transform: [{ rotate: "-45deg" }],
-              textAlign: "right",
-              fontSize: 3,
-              color: Colors.light.text,
-            }}
-            yAxisTextStyle={{
-              color: Colors.light.text,
-              fontSize: 12,
-            }}
-            xAxisThickness={1}
-            yAxisThickness={0.5}
-            horizontalRulesStyle={{ opacity: 1 }}
-            hideYAxisText={true}
-            spacing={30}
-          />
+        <View style={styles.chartWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 30 }}
+          >
+            <BarChart
+              data={barData}
+              barWidth={26}
+              barBorderRadius={12}
+              maxValue={maxValue + 1}
+              height={220}
+              noOfSections={noOfSections}
+              frontColor="#7E22CE"
+              isAnimated
+              xAxisLabelTextStyle={{
+                transform: [{ rotate: "-35deg" }],
+                textAlign: "right",
+                fontSize: 11,
+                fontFamily: "Inter_400Regular",
+                color: Colors.light.subtitle,
+              }}
+              yAxisTextStyle={{
+                color: Colors.light.subtitle,
+                fontSize: 12,
+                fontFamily: "Inter_400Regular",
+              }}
+              xAxisThickness={0}
+              yAxisThickness={0}
+              hideYAxisText
+              rulesColor="rgba(0,0,0,0.05)"
+              spacing={32}
+            />
+          </ScrollView>
         </View>
       )}
 
@@ -156,7 +187,7 @@ export default function SymthomTrackScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F9F5FF",
+    backgroundColor: "#FFFF",
     paddingHorizontal: 24,
   },
   centeredText: {
@@ -164,29 +195,35 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     color: Colors.light.subtitle,
     fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
   },
   title: {
     fontSize: 22,
     marginVertical: 16,
     color: Colors.light.title,
+    fontFamily: "Inter_400Regular",
+    fontWeight: "600",
   },
   subtitle: {
     fontSize: 20,
     color: Colors.light.subtitleDark,
-    fontWeight: "bold",
+    fontFamily: "Inter_400Regular",
+    fontWeight: "600",
   },
-  card: {
-    backgroundColor: "#F3E8FF",
+  chartWrapper: {
     borderRadius: 20,
-    paddingBottom: 16,
-    paddingLeft: 4,
-    paddingTop: 8,
+    padding: 16,
+    backgroundColor: "#FFFFFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginBottom: 16,
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+    marginBottom: 20,
+  },
+  arrowHint: {
+    alignItems: "center",
+    marginTop: 8,
   },
   detailsHeader: {
     flexDirection: "row",
@@ -200,7 +237,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.card,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -212,5 +249,6 @@ const styles = StyleSheet.create({
     color: Colors.light.subtitleDark,
     marginLeft: 12,
     fontSize: 16,
+    fontFamily: "Inter_400Regular",
   },
 });
